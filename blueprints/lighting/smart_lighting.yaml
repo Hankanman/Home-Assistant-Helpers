@@ -1,259 +1,139 @@
 blueprint:
   name: Smart Lighting Control
-  description: |
-    # Smart Lighting Control Blueprint
-
-    This blueprint allows you to automate your room lighting based on:
-
-    - **Occupancy**
-    - **Illuminance levels**
-    - **Sleep mode**
-    - **Home occupancy**
-
-    ## Features
-    - Automatically adjusts brightness based on **lux sensor readings** or a **manual threshold**.
-    - Dims lights during sleep mode for a relaxed environment.
-    - Fully customizable timeout and transition times.
-    - Handles unavailability of sensors.
-    - Allows enabling/disabling the automation.
-
+  description: Controls room lighting based on occupancy, illuminance, home state, and dimming entity status
   domain: automation
-  author: Hankanman
-  source_url: https://github.com/your-repo/ha-config/blob/main/blueprints/automation/smart_lighting.yaml
+  source_url: https://github.com/your_repo/blueprints
   input:
     enable_automation:
       name: Enable Automation
-      description: Toggle to enable or disable the smart lighting automation
+      description: Input boolean to enable/disable this automation
       selector:
         entity:
-          domain:
-            - input_boolean
-            - binary_sensor
-    people_home:
-      name: People Home
-      description: Toggle to indicate if people are home.
-      selector:
-        entity:
-          domain:
-            - input_boolean
-            - binary_sensor
-          device_class: occupancy
-    guest_mode:
-      name: Guest Mode
-      description: Toggle to allow automation to run even when people are not home.
-      selector:
-        entity:
-          domain:
-            - input_boolean
-            - binary_sensor
-    sleep_mode_sensor:
-      name: Sleep Mode
-      description: Select an entity that represents sleep mode
-      selector:
-        entity:
-          domain:
-            - input_boolean
-            - binary_sensor
+          domain: input_boolean
+
     area_lights:
       name: Area Lights
-      description: The lights to control
+      description: Lights to control
       selector:
         target:
           entity:
             domain: light
+
     occupancy_sensor:
       name: Occupancy Sensor
-      description: Binary sensor that detects occupancy
+      description: Binary sensor for room occupancy
       selector:
         entity:
           domain: binary_sensor
           device_class: occupancy
+
     illuminance_sensor:
       name: Illuminance Sensor
-      description: Sensor measuring room brightness
+      description: Illuminance sensor for the room
       selector:
         entity:
           domain: sensor
           device_class: illuminance
+
     illuminance_threshold_sensor:
       name: Illuminance Threshold
-      description: Select an entity that stores your illuminance threshold value (in lux)
+      description: Sensor or number entity for illuminance threshold
       selector:
         entity:
           domain:
             - sensor
             - input_number
-          device_class: illuminance
-    use_default_illuminance_threshold:
-      name: Use Default Illuminance Threshold
-      description: Use a default illuminance threshold if sensor is unavailable
+
+    sleep_mode_sensor:
+      name: Sleep Mode
+      description: Binary sensor indicating sleep mode
       selector:
-        boolean:
-    default_illuminance_threshold:
-      name: Default Illuminance Threshold
-      description: Illuminance threshold to use if sensor is unavailable
-      default: 10
+        entity:
+          domain:
+            - binary_sensor
+            - input_boolean
+
+    people_home:
+      name: People Home
+      description: Binary sensor indicating if people are home
+      selector:
+        entity:
+          domain:
+            - binary_sensor
+            - input_boolean
+
+    guest_mode:
+      name: Guest Mode
+      description: Optional guest mode override
+      selector:
+        entity:
+          domain:
+            - binary_sensor
+            - input_boolean
+
+    dimming_entity:
+      name: Dimming Entity
+      description: Entity that triggers dimmed lighting when on (e.g., TV, projector)
+      selector:
+        entity:
+          domain:
+            - binary_sensor
+            - media_player
+            - switch
+      default: null
+
+    dim_brightness:
+      name: Dim Brightness
+      description: Brightness percentage when dimming entity is active
       selector:
         number:
-          min: 0
-          max: 1000
-          unit_of_measurement: lx
-    max_brightness_sensor:
-      name: Maximum Brightness Sensor
-      description: Select an entity that defines maximum brightness value (%)
+          min: 1
+          max: 100
+          step: 1
+      default: 30
+
+    max_brightness:
+      name: Maximum Brightness
+      description: Maximum brightness percentage
       selector:
-        entity:
-          domain:
-            - sensor
-            - input_number
-    use_default_max_brightness:
-      name: Use Default Maximum Brightness
-      description: Use a default maximum brightness if sensor is unavailable
-      selector:
-        boolean:
-    default_max_brightness:
-      name: Default Maximum Brightness
-      description: Maximum brightness to use if sensor is unavailable
+        number:
+          min: 1
+          max: 100
+          step: 1
       default: 100
+
+    min_brightness:
+      name: Minimum Brightness
+      description: Minimum brightness percentage when in sleep mode
+      selector:
+        number:
+          min: 1
+          max: 100
+          step: 1
+      default: 1
+
+    transition_time:
+      name: Transition Time
+      description: Light transition time in seconds
       selector:
         number:
           min: 0
-          max: 100
-          unit_of_measurement: "%"
-    min_brightness_sensor:
-      name: Minimum Brightness Sensor
-      description: Select an entity that defines minimum brightness value (%)
-      selector:
-        entity:
-          domain:
-            - sensor
-            - input_number
-    use_default_min_brightness:
-      name: Use Default Minimum Brightness
-      description: Use a default minimum brightness if sensor is unavailable
-      selector:
-        boolean:
-    default_min_brightness:
-      name: Default Minimum Brightness
-      description: Minimum brightness to use if sensor is unavailable
-      default: 10
-      selector:
-        number:
-          min: 0
-          max: 100
-          unit_of_measurement: "%"
-    transition_time_sensor:
-      name: Transition Time Sensor
-      description: Select an entity that defines the transition time (in seconds)
-      selector:
-        entity:
-          domain:
-            - sensor
-            - input_number
-    use_default_transition_time:
-      name: Use Default Transition Time
-      description: Use a default transition time if sensor is unavailable
-      selector:
-        boolean:
-    default_transition_time:
-      name: Default Transition Time
-      description: Transition time to use if sensor is unavailable
+          max: 30
+          step: 1
       default: 2
-      selector:
-        number:
-          min: 0
-          max: 300
-          unit_of_measurement: seconds
-    idle_timeout_sensor:
-      name: Idle Timeout Sensor
-      description: Select an entity that defines idle timeout duration (in seconds)
-      selector:
-        entity:
-          domain:
-            - sensor
-            - input_number
-    use_default_idle_timeout:
-      name: Use Default Idle Timeout
-      description: Use a default idle timeout if sensor is unavailable
-      selector:
-        boolean:
-    default_idle_timeout:
-      name: Default Idle Timeout
-      description: Idle timeout to use if sensor is unavailable
-      default: 300
+
+    idle_timeout:
+      name: Idle Timeout
+      description: Time in seconds before turning off lights when unoccupied
       selector:
         number:
           min: 0
           max: 3600
-          unit_of_measurement: seconds
+          step: 1
+      default: 180
 
-variables:
-  enable_automation: !input enable_automation
-  people_home: !input people_home
-  guest_mode: !input guest_mode
-  sleep_mode_sensor: !input sleep_mode_sensor
-  is_sleep_mode: "{{ is_state(sleep_mode_sensor, 'on') }}"
-  occupancy_sensor: !input occupancy_sensor
-  is_occupied: "{{ is_state(occupancy_sensor, 'on') }}"
-  illuminance_sensor: !input illuminance_sensor
-  current_lux: "{{ states(illuminance_sensor) | float(0) }}"
-  illuminance_threshold_sensor: !input illuminance_threshold_sensor
-  use_default_illuminance_threshold: !input use_default_illuminance_threshold
-  default_illuminance_threshold: !input default_illuminance_threshold
-  illuminance_threshold: >-
-    {% if states(illuminance_threshold_sensor) is not none %}
-      {{ states(illuminance_threshold_sensor) | float(0) }}
-    {% elif use_default_illuminance_threshold %}
-      {{ default_illuminance_threshold | float(0) }}
-    {% else %}
-      0
-    {% endif %}
-  needs_light: "{{ current_lux < illuminance_threshold }}"
-  max_brightness_sensor: !input max_brightness_sensor
-  use_default_max_brightness: !input use_default_max_brightness
-  default_max_brightness: !input default_max_brightness
-  max_brightness: >-
-    {% if states(max_brightness_sensor) is not none %}
-      {{ states(max_brightness_sensor) | float(0) }}
-    {% elif use_default_max_brightness %}
-      {{ default_max_brightness | float(0) }}
-    {% else %}
-      100
-    {% endif %}
-  min_brightness_sensor: !input min_brightness_sensor
-  use_default_min_brightness: !input use_default_min_brightness
-  default_min_brightness: !input default_min_brightness
-  min_brightness: >-
-    {% if states(min_brightness_sensor) is not none %}
-      {{ states(min_brightness_sensor) | float(0) }}
-    {% elif use_default_min_brightness %}
-      {{ default_min_brightness | float(0) }}
-    {% else %}
-      10
-    {% endif %}
-  transition_time_sensor: !input transition_time_sensor
-  use_default_transition_time: !input use_default_transition_time
-  default_transition_time: !input default_transition_time
-  transition_time: >-
-    {% if states(transition_time_sensor) is not none %}
-      {{ states(transition_time_sensor) | float(0) }}
-    {% elif use_default_transition_time %}
-      {{ default_transition_time | float(0) }}
-    {% else %}
-      2
-    {% endif %}
-  idle_timeout_sensor: !input idle_timeout_sensor
-  use_default_idle_timeout: !input use_default_idle_timeout
-  default_idle_timeout: !input default_idle_timeout
-  idle_timeout: >-
-    {% if states(idle_timeout_sensor) is not none %}
-      {{ states(idle_timeout_sensor) | float(0) }}
-    {% elif use_default_idle_timeout %}
-      {{ default_idle_timeout | float(0) }}
-    {% else %}
-      300
-    {% endif %}
-  area_lights: !input area_lights
+mode: restart
+max_exceeded: silent
 
 trigger:
   - platform: state
@@ -261,66 +141,91 @@ trigger:
   - platform: state
     entity_id: !input sleep_mode_sensor
   - platform: state
-    entity_id: !input illuminance_sensor
-  - platform: state
-    entity_id: !input illuminance_threshold_sensor
-  - platform: state
     entity_id: !input people_home
+  - platform: state
+    entity_id: !input illuminance_sensor
   - platform: state
     entity_id: !input guest_mode
   - platform: state
     entity_id: !input enable_automation
-  - platform: homeassistant
-    event: start
-  - platform: homeassistant
-    event: automation_reloaded
+  - platform: state
+    entity_id: !input dimming_entity
+
+variables:
+  illuminance_sensor: !input illuminance_sensor
+  illuminance_threshold_sensor: !input illuminance_threshold_sensor
+  sleep_mode_sensor: !input sleep_mode_sensor
+  occupancy_sensor: !input occupancy_sensor
+  people_home_sensor: !input people_home
+  guest_mode_sensor: !input guest_mode
+  dimming_entity: !input dimming_entity
+  illuminance: "{{ states[illuminance_sensor].state | float(0) }}"
+  threshold: "{{ states[illuminance_threshold_sensor].state | float(1000) }}"
+  is_bright: "{{ illuminance > threshold }}"
+  sleep_mode: "{{ states[sleep_mode_sensor].state == 'on' }}"
+  people_home: "{{ states[people_home_sensor].state == 'on' }}"
+  occupied: "{{ states[occupancy_sensor].state == 'on' }}"
+  guest_mode: "{{ states[guest_mode_sensor].state == 'on' if guest_mode_sensor != {} else false }}"
+  dimming_active: "{{ states[dimming_entity].state in ['on', 'playing'] if dimming_entity != {} else false }}"
+  max_bright: !input max_brightness
+  min_bright: !input min_brightness
+  dim_bright: !input dim_brightness
+  transition: !input transition_time
 
 condition:
-  - condition: or
-    conditions:
-      - condition: state
-        entity_id: !input people_home
-        state: "on"
-      - condition: state
-        entity_id: !input guest_mode
-        state: "on"
   - condition: state
     entity_id: !input enable_automation
     state: "on"
 
 action:
+  - variables:
+      current_brightness: >
+        {% if sleep_mode %}
+          {{ min_bright }}
+        {% elif dimming_active %}
+          {{ dim_bright }}
+        {% else %}
+          {{ max_bright }}
+        {% endif %}
+
   - choose:
+      # When room becomes occupied
       - conditions:
           - condition: template
-            value_template: "{{ is_occupied }}"
+            value_template: "{{ occupied }}"
           - condition: template
-            value_template: "{{ needs_light }}"
+            value_template: "{{ not is_bright }}"
+          - condition: or
+            conditions:
+              - condition: template
+                value_template: "{{ people_home }}"
+              - condition: template
+                value_template: "{{ guest_mode }}"
         sequence:
-          - choose:
-              - conditions:
-                  - condition: template
-                    value_template: "{{ is_sleep_mode }}"
-                sequence:
-                  - service: light.turn_on
-                    target: !input area_lights
-                    data:
-                      brightness_pct: "{{ min_brightness }}"
-                      transition: "{{ transition_time }}"
-            default:
-              - service: light.turn_on
-                target: !input area_lights
-                data:
-                  brightness_pct: "{{ max_brightness }}"
-                  transition: "{{ transition_time }}"
-    default:
-      - delay:
-          seconds: "{{ idle_timeout }}"
-      - condition: state
-        entity_id: "{{ occupancy_sensor }}"
-        state: "off"
-      - service: light.turn_off
-        target: !input area_lights
-        data:
-          transition: "{{ transition_time }}"
+          - service: light.turn_on
+            target: !input area_lights
+            data:
+              brightness_pct: "{{ current_brightness }}"
+              transition: !input transition_time
 
-mode: restart
+      # When room becomes unoccupied
+      - conditions:
+          - condition: template
+            value_template: "{{ not occupied }}"
+        sequence:
+          - delay:
+              seconds: !input idle_timeout
+          - service: light.turn_off
+            target: !input area_lights
+            data:
+              transition: !input transition_time
+
+    default:
+      - if:
+          - condition: template
+            value_template: "{{ is_bright }}"
+        then:
+          - service: light.turn_off
+            target: !input area_lights
+            data:
+              transition: !input transition_time
